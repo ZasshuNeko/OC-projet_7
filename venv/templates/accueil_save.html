@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <meta charset="utf-8" />
+        <title>{{ titre }}</title>
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="row align-items-center">
+                    <div class="col-md-4 img">
+                        <img src="{{url_for('static', filename = 'img/projet7.png')}}" class="img-fluid float-left" alt="icone">
+                    </div>
+                    <div class="col-md-8">
+                            <h1>{{titre_page}}</h1>
+                    </div>
+            </div>
+            <div class="row"></div>
+            <div class="row">
+                <div class="col-md-12">
+                    <form action='' method='post'>
+                        <div class='form-group'>
+                            <label for='corps'>La réponse de papy bot est ...</label>
+                            <div class='rounded border border-warning' id='corps' name='corps'>
+                            <ul class="list-group">{% if rep|length > 0 %}
+                                <li class="list-group-item list-group-item-info">{{demande}}</li>
+                                <li class="list-group-item list-group-item-success">{{reponse}}</li>
+                                <li class="list-group-item list-group-item-warning"><img src='{{rep}}' class="img-fluid" /></li>
+                            {% else %}
+                                {{corp}}
+                            {% endif %}
+                            </ul></div>
+                        </div>
+                        <div class='form-group'>
+                            <label for='txt'>Posez votre question mon petit</label>
+                            <input type='text' class='form-control' id='txt'name='discution'>
+                        </div><div class='form-group'>
+                            <button type='submit' class='btn btn-primary'>Valider</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <p>MAZALEYRAT NICOLAS</p>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-right">
+                        <p>Lien vers GIT</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
