@@ -25,7 +25,9 @@
                             <div class='rounded border border-warning' id='corps' name='corps'>
                             <ul class="list-group">{% for ligne in corps %}
                                 {% if ligne.find('https://maps.google.com') != -1 %}
-                                 <li class="list-group-item list-group-item-success"><img src="{{ligne}}" class="img-fluid" /></li>
+                                 <li class="list-group-item list-group-item-success">
+                                     <img src='{{ligne}}' class="img-fluid" />
+                                 </li>
                                 {% else %}
                                 <li class="list-group-item list-group-item-info">{{ligne}}</li>
                                 {% endif %}

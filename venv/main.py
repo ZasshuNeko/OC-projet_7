@@ -31,6 +31,7 @@ def index():
 		# Génère l'historique de la discution
 		historique_discution = gerer_discution(
 			discution, demande, brute_reponse)
+		print(historique_discution)
 		return render_template(
 			'accueil.html',
 			titre="Bienvenue !",
@@ -57,7 +58,7 @@ def gestion_question(demande):
 		word for word in liste_demande if word not in stopwords.words('French')]
 	for index, mot in enumerate(filtered_words):
 		search_wiki = chercher_termes(mot, filtered_words)
-		if mot == 'où':
+		if mot == 'où' or mot == "adresse":
 			reponse_apigoogle = api_google(filtered_words[index + 1])
 			reponse_wiki = api_wiki(filtered_words[index + 1], search_wiki)
 		elif len(filtered_words) == 1:
@@ -139,16 +140,7 @@ def gerer_discution(liste_discution, demande, api_google):
 	reponse_papy = gerer_salutation(api_google[2])
 
 	if api_google[0] != "None":
-		reponse = 'papy : ' + reponse_papy + \
-			' Bien sur que je sais où ça se trouve ! Tu me prends pour qui jeune homme ?'
-		liste_discution.append(demande)
-		liste_discution.append(reponse)
-		x = 0
-		while x < len(api_google):
-			if not isinstance(api_google[x], int):
-				if len(api_google[x]) > 0:
-					liste_discution.append(api_google[x])
-			x += 1
+		reponse = maj_historique(liste_discution,demande,reponse_papy,api_google)
 	# Réponse si uniquement réponse wiki
 	elif api_google[0] == "None" and api_google[1] != "None":
 		reponse = 'papy : ' + reponse_papy + \
@@ -163,6 +155,31 @@ def gerer_discution(liste_discution, demande, api_google):
 						liste_discution.append(api_google[x])
 			x += 1
 	return liste_discution
+
+def maj_historique(liste_discution,demande,reponse_papy,api_google):
+	reponse = 'papy : ' + reponse_papy + \
+	' Bien sur que je sais où ça se trouve ! Tu me prends pour qui jeune homme ?'
+	liste_discution.append(demande)
+	liste_discution.append(reponse)
+	x = 0
+	while x < len(api_google):
+		if not isinstance(api_google[x], int):
+			if len(api_google[x]) > 0:
+				if isinstance(api_google[x], list) and api_google[x][1] != "None":
+					chaine_api = api_google[x][1]
+					if isinstance(chaine_api[0:1], str):
+						texte_papy = api_google[x][1].split(",")
+						indication_papy = "Alors mon petit ! Sache que " + texte_papy[0] + " est situé " + texte_papy[1] + " code postal " + texte_papy[2]
+						liste_discution.append(indication_papy)
+						liste_discution.append(api_google[x][0])
+				elif isinstance(api_google[x], list) and api_google[x][1] == "None":
+					indication_papy = "Mon enfant voyons il existe beaucoup d'endroit ainsi nommé"
+					liste_discution.append(indication_papy)
+					liste_discution.append(api_google[x][0])
+				else:
+					liste_discution.append(api_google[x])
+		x += 1
+
 
 
 def gerer_salutation(salutation):

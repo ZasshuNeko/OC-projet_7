@@ -10,9 +10,9 @@ import requests
 
 
 class Api_wiki:
-""" Cette classe permet d'émettre une demande via l'API wikipédia
-à l'initialisation nous chargeons les différentes variable dont on a besoin
-"""
+	""" Cette classe permet d'émettre une demande via l'API wikipédia
+	à l'initialisation nous chargeons les différentes variable dont on a besoin
+	"""
 	def __init__(self):
 		self.adresse_api = 'https://fr.wikipedia.org/w/api.php'
 		self.action = "opensearch"
@@ -24,17 +24,25 @@ class Api_wiki:
 	def search_api(self, demande, search_wiki):
 		""" Permet d'éffectuer la recherche représenté par la variable demande
 		"""
-		parametres = {
-			"action": self.action_parse,
-			"page": demande,
-			"prop": self.prop,
-			"section": 5,
-			"format": self.format
-		}
+		parametres =  config_request_avc_section(demande,self.action_parse,self.prop,self.format)
 		r = requests.get(url=self.adresse_api, params=parametres)
 		reponse = r.json()
 		# Permet de tester la réponse
 		chaine_content = try_content(reponse, demande)
+		if chaine_content[0] == "None":
+			configuration = config_request_ss_section(demande,self.action_parse,self.prop,self.format)
+			r = requests.get(url=self.adresse_api, params=configuration)
+			reponse = r.json()
+			chaine_content = try_content(reponse, demande)
+			if chaine_content[0].find("REDIRECT") != -1:
+				chaine_new_reponse = nw_chaine(chaine_content[0])
+				configuration = config_request_avc_section(chaine_new_reponse,self.action_parse,self.prop,self.format)
+				r = requests.get(url=self.adresse_api, params=configuration)
+				reponse = r.json()
+				chaine_content = try_content(reponse, demande)
+			else:
+				chaine_content[0] = "None"
+
 		split_chaine = chaine_content[0].split("\n")
 		if chaine_content[1] == "None":
 			# Permet de gérer la réponse
@@ -43,6 +51,24 @@ class Api_wiki:
 			chaine_finale = chaine_content[1]
 		return chaine_finale
 
+def config_request_ss_section(chaine,action_parse,prop,format_self):
+	parametres = {
+		"action": action_parse,
+		"page": chaine,
+		"prop": prop,
+		"format": format_self
+	}
+	return parametres
+
+def config_request_avc_section(chaine,action_parse,prop,format_self):
+	parametres = {
+		"action": action_parse,
+		"page": chaine,
+		"prop": prop,
+		"section": 5,
+		"format": format_self
+	}
+	return parametres
 
 def recuperation_text(chaine_content):
 	"""Permet de traiter la réponse sélectionné et de retirer les termes superflux
@@ -88,6 +114,14 @@ def try_content(reponse, demande):
 
 	return [chaine_content, error]
 
+def nw_chaine(mot_redirection):
+	nw_chaine_reponse = []
+	redirection = mot_redirection.split("[[")
+	for lettre in redirection[1]:
+		if lettre != "]":
+			nw_chaine_reponse.append(lettre)
+	nw_chaine = "".join(nw_chaine_reponse)
+	return nw_chaine
 
 def gestion_chaine(split_chaine, search_wiki):
 	"""Permet de récupérer la totalité ou partie de la réponse selon la demande de l'utilisateur
