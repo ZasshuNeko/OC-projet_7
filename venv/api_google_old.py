@@ -21,14 +21,14 @@ class Api_google:
 		"""Créer la demande et permet d'obtenir la réponse avec la variable selection
 		"""
 		question_api = self.adresse_api + demande #+ self.carte_api
-		#r = requests.get(question_api)
-		#reponse = str(r.content)
+		r = requests.get(question_api)
+		reponse = str(r.content)
 		#print(reponse)
 		
 		#print(test_split, len(test_split))
 		# Permet de sélectionner le lien vers l'image google map
-		#selection = selection_api(reponse)
-		return question_api
+		selection = selection_api(reponse)
+		return selection
 
 
 def selection_api(reponse):

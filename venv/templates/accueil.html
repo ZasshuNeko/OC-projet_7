@@ -3,6 +3,9 @@
     <head>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <meta charset="utf-8" />
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <script type="text/javascript" src="{{url_for('static', filename='ajax_23.js')}}"></script>
+        <script type="text/javascript">$SCRIPT_ROOT={{ request.script_root|tojson|safe }};</script>
         <title>{{ titre }}</title>
     </head>
 
@@ -19,26 +22,19 @@
             <div class="row"></div>
             <div class="row">
                 <div class="col-md-12">
-                    <form action='' method='post'>
+                    <form role="form">
                         <div class='form-group'>
                             <label for='corps'>Attention jeune homme papy te parle...</label>
                             <div class='rounded border border-warning' id='corps' name='corps'>
-                            <ul class="list-group">{% for ligne in corps %}
-                                {% if ligne.find('https://maps.google.com') != -1 %}
-                                 <li class="list-group-item list-group-item-success">
-                                     <img src='{{ligne}}' class="img-fluid" />
-                                 </li>
-                                {% else %}
-                                <li class="list-group-item list-group-item-info">{{ligne}}</li>
-                                {% endif %}
-                                {% endfor %}
+                            <ul class="list-group" id='historique'>
+                                <li class='list-group-item list-group-item-success'>{{corps}}</li>
                             </ul></div>
                         </div>
                         <div class='form-group'>
                             <label for='txt'>Posez votre question mon petit</label>
-                            <input type='text' class='form-control' id='txt'name='discution'>
+                            <input type='text' class='form-control' id='txt'>
                         </div><div class='form-group'>
-                            <button type='submit' class='btn btn-primary'>Valider</button>
+                            <button type='submit' class='btn btn-primary' id="btn-valide">Valider</button>
                         </div>
                     </form>
                 </div>
@@ -54,5 +50,6 @@
                 </div>
             </div>
         </div>
+
     </body>
 </html>

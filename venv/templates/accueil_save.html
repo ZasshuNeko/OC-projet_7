@@ -21,22 +21,24 @@
                 <div class="col-md-12">
                     <form action='' method='post'>
                         <div class='form-group'>
-                            <label for='corps'>La réponse de papy bot est ...</label>
+                            <label for='corps'>Attention jeune homme papy te parle...</label>
                             <div class='rounded border border-warning' id='corps' name='corps'>
-                            <ul class="list-group">{% if rep|length > 0 %}
-                                <li class="list-group-item list-group-item-info">{{demande}}</li>
-                                <li class="list-group-item list-group-item-success">{{reponse}}</li>
-                                <li class="list-group-item list-group-item-warning"><img src='{{rep}}' class="img-fluid" /></li>
-                            {% else %}
-                                {{corp}}
-                            {% endif %}
+                            <ul class="list-group">{% for ligne in corps %}
+                                {% if ligne.find('https://maps.google.com') != -1 %}
+                                 <li class="list-group-item list-group-item-success">
+                                     <img src='{{ligne}}' class="img-fluid" />
+                                 </li>
+                                {% else %}
+                                <li class="list-group-item list-group-item-info">{{ligne}}</li>
+                                {% endif %}
+                                {% endfor %}
                             </ul></div>
                         </div>
                         <div class='form-group'>
                             <label for='txt'>Posez votre question mon petit</label>
                             <input type='text' class='form-control' id='txt'name='discution'>
                         </div><div class='form-group'>
-                            <button type='submit' class='btn btn-primary'>Valider</button>
+                            <button type='submit' class='btn btn-primary' id="btn-valide">Valider</button>
                         </div>
                     </form>
                 </div>
@@ -52,5 +54,7 @@
                 </div>
             </div>
         </div>
+        <script type=text/javascript src="{{url_for('static', filename='ajax.js')}}"></script>
+        <script type="text/javascript">$SCRIPT_ROOT={{ request.script_root|tojson|safe }};</script>
     </body>
 </html>
