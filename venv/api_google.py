@@ -7,6 +7,7 @@ import json
 import sys
 
 import requests
+import re
 
 
 class Api_google:
@@ -21,14 +22,11 @@ class Api_google:
 		"""Créer la demande et permet d'obtenir la réponse avec la variable selection
 		"""
 		question_api = self.adresse_api + demande #+ self.carte_api
-		#r = requests.get(question_api)
-		#reponse = str(r.content)
-		#print(reponse)
-		
-		#print(test_split, len(test_split))
+		r = requests.get(question_api)
+		reponse = str(r.content)
 		# Permet de sélectionner le lien vers l'image google map
-		#selection = selection_api(reponse)
-		return question_api
+		selection = selection_api(reponse)
+		return selection
 
 
 def selection_api(reponse):
@@ -42,8 +40,6 @@ def selection_api(reponse):
 		elif n.startswith("https://maps.google") == True and n.find("&") != -1:
 			if n not in reponse_tab:
 				reponse_tab.append(n)
-
-	print(reponse_tab)
 	if len(reponse_tab) >= 1:
 		lock_reponse = reponse_tab
 		html = recuperation_html(lock_reponse)
@@ -53,7 +49,7 @@ def selection_api(reponse):
 def recuperation_html(selection):
 	""" Formate le lien html
 	"""
-	localisation = ""
+	localisation = "None"
 	for index, mot in enumerate(selection):
 		if mot.find("https://www.google") != -1:
 			html = mot.replace('\\', '')
@@ -69,7 +65,25 @@ def recuperation_html(selection):
 			html = mot.replace('&amp;', '&')
 			lien = html
 	if len(localisation) == 0:
-		localisation = "None" 
+		localisation = "None"
 
+	rue = recuperation_rue(localisation)
 
-	return [lien,localisation]
+	return [lien,localisation,rue]
+
+def recuperation_rue(localisation):
+	if localisation != 'None':
+		if isinstance(localisation[0:1], str):
+			localisation_rue = localisation.split(",")
+			nbr_rue = re.findall('\d+',localisation_rue[1])[0]
+			rue = localisation_rue[1].replace(nbr_rue,"")
+			rue = rue.strip()
+			#rue = rue.replace(" ","+")
+		else:
+			localisation_rue = adresse.split(",")
+			rue = localisation_rue[0].strip()
+			#rue = rue.replace(" ","+")
+	else:
+		rue = "N_o_"
+	return rue
+
