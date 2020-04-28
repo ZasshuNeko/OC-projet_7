@@ -50,7 +50,7 @@ def gestion_question(demande):
 	filtered_words = [
 		word for word in liste_demande if word not in stopwords.words('French')]
 	for index, mot in enumerate(filtered_words):
-		search_wiki = chercher_termes(mot, filtered_words)
+		search_wiki = chercher_termes(mot) #, filtered_words
 		if mot == 'où' or mot == "adresse" or search_wiki == 1:
 			if search_wiki == 1:
 				reponse_wiki = api_wiki("N_o_", filtered_words[index + 1], search_wiki,"N_o_")
@@ -105,22 +105,49 @@ def creation_json(demande,gestion_demande):
 		return fichier_json
 
 def papy_reponse(adresse):
-	if isinstance(adresse[0:1], str):
-		texte_papy = adresse.split(",")
-		x = 0
-		print(len(texte_papy))
-		if len(texte_papy) > 1:
-			while x <= len(adresse):
-				if x == 0:
-					indication_papy = "Alors mon petit ! Sache que " + texte_papy[x]
-				elif x == 1:
-					indication_papy = indication_papy + " est situé " + texte_papy[x]
-				elif x == 2:
-					indication_papy = indication_papy +  " code postal " + texte_papy[x]
-				x += 1
-		elif len(texte_papy) == 1:
-			indication_papy = "Mon petit il n'y pas d'adresse ou à trop d'adresse !"
+	"""
+	Génère la réponse de papy
+	"""
+	ss_chaine = str(adresse[0:1])
+	if ss_chaine.isalpha() == False:
+		indication_papy = reponse_add(adresse)
+	else:
+		indication_papy = reponse_nom(adresse)	
 	indication_papy = "<li class='list-group-item list-group-item-success'>Papy : " + indication_papy + "</li>"	
+	return indication_papy
+
+def reponse_nom(adresse):
+	"""
+	Réponse formaté avec nom devant l'adresse
+	"""
+	texte_papy = adresse.split(",")
+	x = 0
+	if len(texte_papy) > 1:
+		while x <= len(adresse):
+			if x == 0:
+				indication_papy = "Alors mon petit ! Sache que " + texte_papy[x]
+			elif x == 1:
+				indication_papy = indication_papy + " est situé " + texte_papy[x]
+			elif x == 2:
+				indication_papy = indication_papy +  " code postal " + texte_papy[x]
+			x += 1
+	elif len(texte_papy) == 1:
+		indication_papy = "Mon petit il y a trop d'adresse !"
+	return indication_papy
+
+def reponse_add(adresse):
+	"""
+	Réponse formaté sans le nom de la recherche
+	"""
+	texte_papy = adresse.split(",")
+	x = 0
+	if len(texte_papy) > 1:
+		while x <= len(adresse):
+			if x == 0:
+				indication_papy = "Alors mon petit ! Sache que cela est situé " + texte_papy[x]
+			elif x == 1:
+				indication_papy = indication_papy +  " code postal " + texte_papy[x]
+			x += 1
 	return indication_papy
 
 def api_google(terme_important):
@@ -141,7 +168,7 @@ def api_wiki(terme_important,demande, search_wiki,rue_google):
 	resultat = apiwiki.search_api(terme_important,demande, search_wiki,rue_google)
 	return resultat
 
-def chercher_termes(mot, demande):
+def chercher_termes(mot):
 	""" 
 	Permet de déterminer s'il y a un terme intéréssant pour l'API wikipedia, cela se base sur
 	différent terme que l'on va chercher
