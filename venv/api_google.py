@@ -49,7 +49,7 @@ def selection_api(reponse):
 def recuperation_html(selection):
 	""" Formate le lien html
 	"""
-	localisation = "None"
+	booleen_localisation = False
 	for index, mot in enumerate(selection):
 		if mot.find("https://www.google") != -1:
 			html = mot.replace('\\', '')
@@ -61,29 +61,27 @@ def recuperation_html(selection):
 					localisation = adresse_html[index+1]
 					break
 			localisation = localisation.replace("+", " ")
+			booleen_localisation = True
 		elif mot.find("https://maps.google") != -1:
 			html = mot.replace('&amp;', '&')
-			lien = html
-	if len(localisation) == 0:
-		localisation = "None"
+			lien = html		
 
-	rue = recuperation_rue(localisation)
-
-	return [lien,localisation,rue]
+	if booleen_localisation:
+		rue = recuperation_rue(localisation)
+		return [lien,localisation,rue]
+	else:
+		return [lien]
 
 def recuperation_rue(localisation):
-	if localisation != 'None':
-		if isinstance(localisation[0:1], str):
-			localisation_rue = localisation.split(",")
-			nbr_rue = re.findall('\d+',localisation_rue[1])[0]
-			rue = localisation_rue[1].replace(nbr_rue,"")
-			rue = rue.strip()
-			#rue = rue.replace(" ","+")
-		else:
-			localisation_rue = adresse.split(",")
-			rue = localisation_rue[0].strip()
-			#rue = rue.replace(" ","+")
+	if isinstance(localisation[0:1], str):
+		localisation_rue = localisation.split(",")
+		nbr_rue = re.findall('\d+',localisation_rue[1])[0]
+		rue = localisation_rue[1].replace(nbr_rue,"")
+		rue = rue.strip()
+		#rue = rue.replace(" ","+")
 	else:
-		rue = "N_o_"
+		localisation_rue = adresse.split(",")
+		rue = localisation_rue[0].strip()
+		#rue = rue.replace(" ","+")
 	return rue
 

@@ -46,19 +46,19 @@ def gestion_question(demande):
 	# Appel la fonction qui corrige l'orthographe des mots important et ramène s'il y a une salutation
 	correctif_demande = correction_demande(demande)
 	liste_demande = correctif_demande[0]
-	# Retire les stopword de la liste des mots fait à partir de la demande
-	filtered_words = [
-		word for word in liste_demande if word not in stopwords.words('French')]
-	for index, mot in enumerate(filtered_words):
-		search_wiki = chercher_termes(mot) #, filtered_words
-		if mot == 'où' or mot == "adresse" or search_wiki == 1:
-			if search_wiki == 1:
-				reponse_wiki = api_wiki("N_o_", filtered_words[index + 1], search_wiki,"N_o_")
-				reponse_apigoogle = "None"
-			else:
-				reponse_apigoogle = api_google(filtered_words[index + 1])
-				reponse_wiki = api_wiki(reponse_apigoogle[2], filtered_words[index + 1], search_wiki,reponse_apigoogle[2])
-	return [reponse_apigoogle, reponse_wiki, correctif_demande[1]]
+	terme_selection = chercher_termes(liste_demande)
+	search_terme = terme_selection[0]
+
+	if terme_selection[1]:
+		reponse_apigoogle = []
+		reponse_wiki = search_terme
+	else :
+		reponse_apigoogle = api_google(search_terme)
+		if len(reponse_apigoogle) >= 3:
+			reponse_wiki = api_wiki(search_terme,reponse_apigoogle[2])
+		else:
+			reponse_wiki = api_wiki(search_terme)
+	return [reponse_apigoogle, reponse_wiki, correctif_demande[1],terme_selection[1]]
 
 def correction_demande(demande):
 	""" 
@@ -83,37 +83,46 @@ def salutation_utilisateur(terme):
 	Gérer si utilisateur à salué papy
 	"""
 	if terme == "salut" or terme == "bonjour" or terme == "yo":
-		salutation = 1
+		salutation = "Un jeune bien élevé comme on les apprécie tant ! "
 	else:
-		salutation = 0
+		salutation = "Petit malotrue ! On salut son ainé avant de demander ... "
 	return salutation
 
 def creation_json(demande,gestion_demande):
-	if len(gestion_demande[0]) == 3:
+	if len(gestion_demande[0]) >=1:
 		demande = "<li class='list-group-item list-group-item-warning'>Vous : " + demande + "</li>";
 		url_google = "<li class='list-group-item list-group-item-success'><img src=" + gestion_demande[0][0] + " class='img-fluid' /></li>"
-		reponse_papy = papy_reponse(gestion_demande[0][1])
-		papy_wiki = "<li class='list-group-item list-group-item-success'><p>" + gestion_demande[1] + "</p></li>"
-		dictionnaire = {'resultat' : demande, 'url_google' : url_google, 'localisation' : reponse_papy, 'wiki' : papy_wiki}
-		fichier_json = json.dumps(dictionnaire)
-		return fichier_json
+		reponse_papy = papy_reponse(gestion_demande[2], gestion_demande[3], gestion_demande[0])
+		papy_wiki = "<li class='list-group-item list-group-item-success'><p>Papy :" + gestion_demande[1] + "</p></li>"
 	else:
 		demande = "<li class='list-group-item list-group-item-warning'>Vous : " + demande + "</li>";
-		papy_wiki = "<li class='list-group-item list-group-item-success'><p>" + gestion_demande[1] + "</p></li>"
-		dictionnaire = {'resultat' : demande, 'url_google' : "", 'localisation' : "", 'wiki' : papy_wiki}
-		fichier_json = json.dumps(dictionnaire)
-		return fichier_json
+		papy_wiki = "<li class='list-group-item list-group-item-success'><p>Papy :" + gestion_demande[1] + "</p></li>"
+		url_google = ""
+		reponse_papy = papy_reponse(gestion_demande[2], gestion_demande[3])
 
-def papy_reponse(adresse):
+	dictionnaire = {'resultat' : demande, 'url_google' : url_google, 'localisation' : reponse_papy, 'wiki' : papy_wiki}
+	fichier_json = json.dumps(dictionnaire)
+	print(dictionnaire)
+	return fichier_json
+
+def papy_reponse(salutation,boolean_error, *adresse):  #adresse, salutation):
 	"""
 	Génère la réponse de papy
 	"""
-	ss_chaine = str(adresse[0:1])
-	if ss_chaine.isalpha() == False:
-		indication_papy = reponse_add(adresse)
+	if boolean_error:
+		indication_papy = "<li class='list-group-item list-group-item-success'>Papy : Hmmmm attends ...heu...</li>"
 	else:
-		indication_papy = reponse_nom(adresse)	
-	indication_papy = "<li class='list-group-item list-group-item-success'>Papy : " + indication_papy + "</li>"	
+		selection_adresse = adresse[0]
+		if len(selection_adresse) >= 2:
+			lieu = selection_adresse[1]
+			ss_chaine = str(lieu[0:1])
+			if ss_chaine.isalpha() == False:
+				indication_papy = reponse_add(lieu)
+			else:
+				indication_papy = reponse_nom(lieu)
+		else:
+			indication_papy = "Voyons, il y a beaucoup d'endroit pour tous te les citer"
+		indication_papy = "<li class='list-group-item list-group-item-success'>Papy : " + salutation + "</br>" + indication_papy + "</li>"	
 	return indication_papy
 
 def reponse_nom(adresse):
@@ -131,8 +140,6 @@ def reponse_nom(adresse):
 			elif x == 2:
 				indication_papy = indication_papy +  " code postal " + texte_papy[x]
 			x += 1
-	elif len(texte_papy) == 1:
-		indication_papy = "Mon petit il y a trop d'adresse !"
 	return indication_papy
 
 def reponse_add(adresse):
@@ -159,21 +166,20 @@ def api_google(terme_important):
 	resultat = apigoogle.search_api(terme_important)
 	return resultat
 
-def api_wiki(terme_important,demande, search_wiki,rue_google):
+def api_wiki(terme_important,*autres):
 	"""
 	Permet d'initialiser la classe gérant l'api wikipedia et de l'intéroger avec le terme important
 	de la question.
 	"""
 	apiwiki = Api_wiki()
-	resultat = apiwiki.search_api(terme_important,demande, search_wiki,rue_google)
+	resultat = apiwiki.search_api(terme_important,autres)
 	return resultat
 
-def chercher_termes(mot):
+def chercher_termes(liste_demande):
 	""" 
 	Permet de déterminer s'il y a un terme intéréssant pour l'API wikipedia, cela se base sur
 	différent terme que l'on va chercher
 	"""
-	wiki = 0
 	liste_terme = [
 		"connais",
 		"connaitre",
@@ -181,10 +187,24 @@ def chercher_termes(mot):
 		"sais",
 		"sait",
 		"savoir",
-		"quoi"]
-	if mot in liste_terme:
-		wiki = 1
-	return wiki
+		"quoi",
+		"où",
+		"adresse"]
+
+	error = False
+		# Retire les stopword de la liste des mots fait à partir de la demande
+	filtered_words = [
+		word for word in liste_demande if word not in stopwords.words('French')]
+	for index, mot in enumerate(filtered_words):
+		if mot in liste_terme:
+
+			try:
+				terme = filtered_words[index + 1]
+			except:
+				terme = " Quoi répète plus fort ?!!"
+				error = True
+			break
+	return [terme, error]
 
 @app.context_processor
 def titre_page():

@@ -21,43 +21,31 @@ class Api_wiki:
 
 		self.session = requests.Session()
 
-	def search_api(self, demande,question, search_wiki,rue_google):
+	def search_api(self, terme_recherche, autres):
 		""" Permet d'éffectuer la recherche représenté par la variable demande
 		"""
-		x = 0
-		r = api_wikipedia(demande,question,self.action,self.liste,self.format,rue_google,self.adresse_api,self.session)
-		reponse = r.json()
-		print(reponse)
+		reponse = api_wikipedia(terme_recherche,self.action,self.liste,self.format,self.adresse_api,self.session, autres)
 		# Permet de tester la réponse
-		chaine_content = try_content(reponse, demande)
-		if chaine_content[0] == "None":
+		chaine_content = try_content(reponse, terme_recherche)
+		if chaine_content[1] == True:
 			print('Il est vide !')
 		else:
-			tab_reponse_papy = []
-			for information in chaine_content[0]:
-				if information.get("title") == demande and rue_google != "None" or  str(information.get("title")).lower() == question:
-					information_selection = information.get("snippet")
-					pageid = str(information.get("pageid"))
-					reponse_papy = informations(information_selection,pageid,x,search_wiki)
-					tab_reponse_papy.append(reponse_papy)
-					x += 1
-				elif search_wiki == 1 and information.get("snippet").find(question):
-					information_selection = information.get("snippet")
-					pageid = str(information.get("pageid"))
-					reponse_papy = informations(information_selection,pageid,x,search_wiki)
-					tab_reponse_papy.append(reponse_papy)
-					break
+			tab_reponse_papy = creation_tableau_reponse(chaine_content[0],terme_recherche,autres)
 			reponse_papy = " ".join(tab_reponse_papy)
 
-		if chaine_content[1] == "None":
+		if chaine_content[1] == False:
 			# Permet de gérer la réponse
 			chaine_finale = reponse_papy
 		else:
 			chaine_finale = chaine_content[1]
+
 		return chaine_finale
 
-def informations(information,pageid,nbr,search_wiki):
-	information_papy = gestion_chaine(information,search_wiki)
+def informations(information,pageid,nbr):
+	"""
+	Création de la réponse de papy à partir de la réponse api
+	"""
+	information_papy = gestion_chaine(information)
 	if nbr > 0:
 		information_papy = "Holalala je peux même te dire encore plus de chose ..." + information_papy
 	information_complementaire = ". Suit ce <a href='https://fr.wikipedia.org/?curid=" + pageid +"' >lien</a> et plus d'informaiton tu trouvera !"
@@ -65,7 +53,40 @@ def informations(information,pageid,nbr,search_wiki):
 
 	return reponse_papy
 
+def creation_tableau_reponse(reponse_information,demande,*autres):
+	"""
+	Création du tableau pour générer la réponse
+	"""
+	x = 0
+	tab_reponse_papy = []
+	for information in reponse_information:
+		if str(information.get("title")).lower() == demande:
+			reponse_papy = recuperation_information(information,x)
+			tab_reponse_papy.append(reponse_papy)
+			x += 1
+		else:
+			if len(autres[0]) > 0:
+				if str(information.get("title")).lower() == autres[0][0] or information.get("snippet").find(autres[0][0]):
+					reponse_papy = recuperation_information(information,x)
+					tab_reponse_papy.append(reponse_papy)
+					x += 1
+		if x > 1:
+			break
+	return tab_reponse_papy
+
+def recuperation_information(information,x):
+	"""
+	Récupération des informations dans le json
+	"""
+	information_selection = information.get("snippet")
+	pageid = str(information.get("pageid"))
+	reponse_papy = informations(information_selection,pageid,x)
+	return reponse_papy
+
 def config_request_demande(chaine,action,liste,format_self):
+	"""
+	Paramétre de l'API
+	"""
 	parametres = {
 		"action": action,
 		"format": format_self,
@@ -74,15 +95,18 @@ def config_request_demande(chaine,action,liste,format_self):
 	}
 	return parametres
 
-def api_wikipedia(demande,question,action,liste,format_api,rue_google,adresse_api,session):
-	if rue_google != "N_o_":
-		parametres =  config_request_demande(demande,action,liste,format_api)
+def api_wikipedia(terme_recherche,action,liste,format_api,adresse_api,session,*autres):
+	"""
+	Envoie de la requête à l'API
+	"""
+	if len(autres[0]) == 0:
+		parametres =  config_request_demande(terme_recherche,action,liste,format_api)
 		r = session.get(url=adresse_api, params=parametres)
 	else:
-		parametres =  config_request_demande(question,action,liste,format_api)
+		parametres =  config_request_demande(autres[0],action,liste,format_api)
 		r = session.get(url=adresse_api, params=parametres)
-
-	return r
+	reponse = r.json()
+	return reponse
 
 def modification_chaine(correction_chaine):
 	""" Permet de retirer les signes inutiles dût au formatage de la réponse
@@ -106,14 +130,14 @@ def try_content(reponse, demande):
 	try:
 		chaine_content = reponse['query']['search']
 	except KeyError:
-		error = "Mais... je n'ai rien à te dire sur " + demande + " !"
-		chaine_content = "None"
+		error = True
+		chaine_content = "Mais... je n'ai rien à te dire sur " + demande + " !"
 	else:
-		error = "None"
+		error = False
 
 	return [chaine_content, error]
 
-def gestion_chaine(chaine, search_wiki):
+def gestion_chaine(chaine):
 	"""Permet de récupérer la totalité ou partie de la réponse selon la demande de l'utilisateur
 	"""
 	if chaine.find('homonymes') != -1 or chaine.find('homonymie') != -1:
