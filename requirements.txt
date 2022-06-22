@@ -11,7 +11,7 @@ joblib==0.14.1
 mysql-connector==2.2.9
 mysql-connector-python==8.0.19
 nltk==3.5
-numpy==1.18.1
+numpy==1.22.0
 pandas==1.0.1
 pip-api==0.0.14
 pipreqs==0.4.10
